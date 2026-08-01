@@ -1,0 +1,79 @@
+name: Update VictoriaMetrics Agent
+
+on:
+  schedule:
+    # 03:00 JST every day
+    - cron: "0 18 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-vmagent
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: trunk
+
+      - name: Determine latest vmagent release
+        id: latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          latest=$(gh api "repos/VictoriaMetrics/VictoriaMetrics/releases?per_page=100" --jq '
+            [.[] | select(.draft==false and .prerelease==false and (.tag_name | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")))
+                 | . as $r
+                 | select([$r.assets[].name] | index("vmutils-linux-amd64-" + $r.tag_name + ".tar.gz"))
+                 | $r.tag_name]
+            | sort_by(ltrimstr("v") | split(".") | map(tonumber))
+            | last
+          ')
+          if [ -z "$latest" ] || [ "$latest" = "null" ]; then
+            echo "Could not determine latest vmagent release" >&2
+            exit 1
+          fi
+          echo "Latest release with linux-amd64 assets: $latest"
+          echo "version=$latest" >> "$GITHUB_OUTPUT"
+
+      - name: Determine currently packaged version
+        id: current
+        run: |
+          set -euo pipefail
+          current=$(grep -oP '^version:\s*"\K[^"]+' victoria-metrics/config.yaml)
+          echo "Currently packaged version: v$current"
+          echo "version=v$current" >> "$GITHUB_OUTPUT"
+
+      - name: Update add-on files
+        if: steps.latest.outputs.version != steps.current.outputs.version
+        run: |
+          set -euo pipefail
+          NEW_VERSION="${{ steps.latest.outputs.version }}"
+          NEW_VERSION_NO_V="${NEW_VERSION#v}"
+
+          sed -i "s/^version: \".*\"/version: \"${NEW_VERSION_NO_V}\"/" victoria-metrics/config.yaml
+          sed -i "s/^ARG VERSION=.*/ARG VERSION=${NEW_VERSION}/" victoria-metrics/Dockerfile
+
+          {
+            printf '## %s\n\n- Updated to VictoriaMetrics Agent %s\n\n' "$NEW_VERSION_NO_V" "$NEW_VERSION_NO_V"
+            cat victoria-metrics/CHANGELOG.md
+          } > victoria-metrics/CHANGELOG.md.tmp
+          mv victoria-metrics/CHANGELOG.md.tmp victoria-metrics/CHANGELOG.md
+
+      - name: Commit and push
+        if: steps.latest.outputs.version != steps.current.outputs.version
+        run: |
+          set -euo pipefail
+          NEW_VERSION="${{ steps.latest.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add victoria-metrics/config.yaml victoria-metrics/Dockerfile victoria-metrics/CHANGELOG.md
+          git commit -m "Update to VictoriaMetrics Agent ${NEW_VERSION#v}"
+          git push origin HEAD:trunk
