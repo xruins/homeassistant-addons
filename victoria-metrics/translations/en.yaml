@@ -14,6 +14,21 @@ configuration:
   password:
     name: Password
     description: Password for the basicAuth/httpAuth (has no effect if HTTPAuth is not enabled).
+  enableRemoteWriteMTLS:
+    name: Enable mTLS for remote write
+    description: If set to true, the client certificate/key below are used for mTLS authentication when connecting to the remote write URL.
+  remoteWriteTLSCert:
+    name: Remote write client certificate
+    description: PEM-encoded client certificate content used for mTLS (has no effect if mTLS is not enabled).
+  remoteWriteTLSKey:
+    name: Remote write client key
+    description: PEM-encoded client private key content used for mTLS (has no effect if mTLS is not enabled).
+  remoteWriteTLSCA:
+    name: Remote write CA certificate
+    description: Optional PEM-encoded CA certificate content used to verify the remote write server (has no effect if mTLS is not enabled).
+  remoteWriteTLSInsecureSkipVerify:
+    name: Skip remote write TLS verification
+    description: If set to true, skips verification of the remote write server's TLS certificate (has no effect if mTLS is not enabled).
   enableNodeExporterScrape:
     name: Enable Node Exporter scrape
     description: If set to true, a Prometheus scrape for Node Exporter will be configured in Victoria Metrics. https://github.com/loganmarchione/hassos-addons/tree/main/prometheus_node_exporter

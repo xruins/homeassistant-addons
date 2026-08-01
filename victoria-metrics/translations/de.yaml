@@ -14,6 +14,21 @@ configuration:
   password:
     name: Passwort
     description: Password für den basicAuth/HTTPAuth (hat keinen Effekt, wenn basicAuth/HTTPAuth nicht aktiviert ist).
+  enableRemoteWriteMTLS:
+    name: Aktiviert mTLS für Remote Write
+    description: Wenn aktiv, werden das Client-Zertifikat und der Schlüssel unten für mTLS-Authentifizierung bei der Remote-Write-URL verwendet.
+  remoteWriteTLSCert:
+    name: Remote Write Client-Zertifikat
+    description: PEM-kodierter Inhalt des Client-Zertifikats für mTLS (hat keinen Effekt, wenn mTLS nicht aktiviert ist).
+  remoteWriteTLSKey:
+    name: Remote Write Client-Schlüssel
+    description: PEM-kodierter Inhalt des privaten Client-Schlüssels für mTLS (hat keinen Effekt, wenn mTLS nicht aktiviert ist).
+  remoteWriteTLSCA:
+    name: Remote Write CA-Zertifikat
+    description: Optionaler PEM-kodierter Inhalt des CA-Zertifikats zur Überprüfung des Remote-Write-Servers (hat keinen Effekt, wenn mTLS nicht aktiviert ist).
+  remoteWriteTLSInsecureSkipVerify:
+    name: TLS-Überprüfung für Remote Write überspringen
+    description: Wenn aktiv, wird die Überprüfung des TLS-Zertifikats des Remote-Write-Servers übersprungen (hat keinen Effekt, wenn mTLS nicht aktiviert ist).
   enablePrometheusScrape:
     name: Aktiviert Prometheus scrape
     description: Wenn aktiv, wird ein Prometheus scrape für Home Assistant in Victoria Metrics hinzugefügt. https://www.home-assistant.io/integrations/prometheus

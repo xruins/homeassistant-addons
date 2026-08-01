@@ -34,6 +34,11 @@ To define the retention, that is how long VictoriaMetrics will keep it's data, s
 See: https://github.com/VictoriaMetrics/VictoriaMetrics#retention
 
 
+### mTLS for remote write
+If the endpoint behind `remoteWriteURL` requires client-certificate authentication (mTLS), enable `enableRemoteWriteMTLS` and paste the PEM-encoded certificate/key contents into `remoteWriteTLSCert` / `remoteWriteTLSKey` (and `remoteWriteTLSCA` if the server uses a custom CA).
+
+Because the add-on configuration form uses single-line text fields, when pasting multi-line PEM content into a single line, replace actual newlines with the literal two-character sequence `\n`; it will be expanded back into real newlines at startup. Alternatively, switch the add-on configuration page to YAML editing mode and use real newlines directly.
+
 ### Sending data to VictoriaMetrics
 To send data from Home Assistant to VictoriaMetrics, you can use the `InfluxDB` integration. 
 Add the following code to your `configuration.yaml` to have a basic setup. (And, of course, restart Home Assistant.)

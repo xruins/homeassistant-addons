@@ -12,6 +12,36 @@ then
     HTTPAUTHARGS="-httpAuth.username=$(bashio::config 'username') -httpAuth.password=$(bashio::config 'password')"
 fi
 
+TLSARGS=""
+if bashio::config.true 'enableRemoteWriteMTLS'
+then
+    CERT_CONTENT=$(bashio::config 'remoteWriteTLSCert')
+    KEY_CONTENT=$(bashio::config 'remoteWriteTLSKey')
+    if [ -z "$CERT_CONTENT" ] || [ -z "$KEY_CONTENT" ]
+    then
+        bashio::exit.nok "enableRemoteWriteMTLS is set but remoteWriteTLSCert or remoteWriteTLSKey is empty"
+    fi
+
+    bashio::log.info "Configuring mTLS for remote write"
+    TLS_DIR=$(mktemp -d)
+    printf '%b\n' "$CERT_CONTENT" > "$TLS_DIR/cert.pem"
+    printf '%b\n' "$KEY_CONTENT" > "$TLS_DIR/key.pem"
+    chmod 600 "$TLS_DIR/key.pem"
+    TLSARGS="-remoteWrite.tlsCertFile=$TLS_DIR/cert.pem -remoteWrite.tlsKeyFile=$TLS_DIR/key.pem"
+
+    CA_CONTENT=$(bashio::config 'remoteWriteTLSCA')
+    if [ -n "$CA_CONTENT" ]
+    then
+        printf '%b\n' "$CA_CONTENT" > "$TLS_DIR/ca.pem"
+        TLSARGS="$TLSARGS -remoteWrite.tlsCAFile=$TLS_DIR/ca.pem"
+    fi
+
+    if bashio::config.true 'remoteWriteTLSInsecureSkipVerify'
+    then
+        TLSARGS="$TLSARGS -remoteWrite.tlsInsecureSkipVerify=true"
+    fi
+fi
+
 PROMETHEUSARGS=""
 bashio::log.info "Use promscrape config for Victoria Metrics"
 SCHEME="http"
@@ -25,4 +55,4 @@ PROMETHEUSARGS="-promscrape.config /prometheus.yml"
 
 bashio::log.info "Starting Victoria Metrics with remote write to $REMOTE_URL"
 bashio::log.info "Starting Victoria Metrics Agent with args set to $ARGS"
-/vmagent-prod -remoteWrite.tmpDataPath /share/vmagent-data -remoteWrite.url "$REMOTE_URL" $HTTPAUTHARGS $PROMETHEUSARGS $ARGS
+/vmagent-prod -remoteWrite.tmpDataPath /share/vmagent-data -remoteWrite.url "$REMOTE_URL" $HTTPAUTHARGS $TLSARGS $PROMETHEUSARGS $ARGS
