@@ -10,8 +10,6 @@ ingress_entry: /targets
 ports:
   8429/tcp: 8429
 arch:
-  - armhf
-  - armv7
   - aarch64
   - amd64
 #  - i386

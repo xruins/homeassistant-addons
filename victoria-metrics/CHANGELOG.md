@@ -1,6 +1,8 @@
 ## 1.148.0
 
 - Updated to VictoriaMetrics Agent 1.148.0
+- Added build.yaml (missing base image caused build failures)
+- Dropped armhf/armv7 support, as upstream base images are no longer published for these architectures
 
 ## 1.132.0
 
