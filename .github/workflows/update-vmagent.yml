@@ -48,8 +48,14 @@ jobs:
         run: |
           set -euo pipefail
           current=$(grep -oP '^version:\s*"\K[^"]+' victoria-metrics/config.yaml)
-          echo "Currently packaged version: v$current"
-          echo "version=v$current" >> "$GITHUB_OUTPUT"
+          # config.yaml version may carry an addon-only patch suffix (e.g. "1.148.0.1"
+          # for changes unrelated to the bundled vmagent release). Only the first three
+          # segments (major.minor.patch) reflect the bundled vmagent version, so compare
+          # against that instead of the full string, otherwise this workflow would
+          # clobber addon-only patch bumps.
+          current_vmagent_version=$(echo "$current" | cut -d. -f1-3)
+          echo "Currently packaged version: v$current (bundled vmagent: v$current_vmagent_version)"
+          echo "version=v$current_vmagent_version" >> "$GITHUB_OUTPUT"
 
       - name: Update add-on files
         if: steps.latest.outputs.version != steps.current.outputs.version
