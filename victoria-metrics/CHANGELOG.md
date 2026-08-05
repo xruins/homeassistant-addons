@@ -1,3 +1,7 @@
+## 1.149.0
+
+- Updated to VictoriaMetrics Agent 1.149.0
+
 ## 1.148.0.1
 
 - Added mTLS support for remote write (remoteWriteTLSCert/remoteWriteTLSKey/remoteWriteTLSCA options)
